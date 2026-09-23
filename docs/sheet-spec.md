@@ -602,3 +602,7 @@ The following v0.1.x and v0.2.0 structures are not part of the v0.3.2 sheet sche
 * Dedicated Fatigue column
 
 Historical files may remain in Git history, but new v0.3.2 workbooks must use the six-sheet structure defined in this document.
+
+## v0.3.3 Contract Foundation
+
+Event_Calendar Date、Training_Plan全列の型・更新権限、LLM Operating Instructions、独立した移行手順は[追加Contract](contract-v033.md)を参照してください。既存v0.3.2 runtimeを維持し、Training_Plan Validationの追加は次段階です。
