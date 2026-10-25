@@ -20,7 +20,7 @@
 
 ## Training_Plan Column Contract
 
-以下は仕様の定義です。今回のmigrationはTraining_Planの値・書式・Validationを変更しません。空欄は未取得を意味し、0とは区別します。A/Bは使用行で必須、他列は未取得・未設定なら空欄可です。数値は有限値、IDは文字列として扱います。
+以下は仕様の定義です。migrateToV033はTraining_Planを変更しません。追加のapplyTrainingPlanValidationV033が行う変更は後述します。空欄は未取得を意味し、0とは区別します。A/Bは使用行で必須、他列は未取得・未設定なら空欄可です。数値は有限値、IDは文字列として扱います。
 
 | 列 | Logical / Physical Type | Validation・意味 | Write Authority |
 | --- | --- | --- | --- |
@@ -70,3 +70,29 @@ Stravaの客観値は保護します。Manual／LLM_USER_REPORTの既存実績�
 ## 検証
 
 ローカル: `node tests/migration_v033_test.js`。Dev Apps Scriptではpreview、初回migration、再実行を行い、A列の型・書式・無効日付拒否とB:J／Training_Plan／既存schema propertyの不変を確認します。文字列日付・欠落・数式・ヘッダ不一致はバックアップのコピーで試し、変更前に停止することを確認します。
+
+
+## Training_Plan 日付・数値Validation（第2段階）
+
+独立した `trainingPlanValidationV033.gs` に実装します。既存のインストーラー、Gateway、migrateToV032、migrateToV033には組み込みません。
+
+1. `previewTrainingPlanValidationV033()`：読み取りのみ。ログのready、issueCount、issuesを確認します。問題は行・列・理由のみ最大50件を表示し、セルの内容はログへ出しません。
+2. `applyTrainingPlanValidationV033()`：Document Lock内で再検査し、readyの場合のみ適用します。適用後は全対象セルの規則と日付書式、既存データの整合性を読み戻してから専用Propertyを保存します。
+3. 同じ関数を再実行し、再適用できることを確認します。成功ログはapplied:trueです。
+
+| 列 | 追加する規則 |
+| --- | --- |
+| A Date | 有効日付のみ、yyyy/MM/dd |
+| E Plan km / H Actual km / I Duration min | 0以上の数値 |
+| J Avg HR / N Max HR | 0より大きい数値 |
+| L Activity Count | 空欄または0以上の整数（カスタム数式） |
+
+適用範囲は2行目から現在のグリッド最終行まで。値・数式を変更せず、A列以外の表示書式と既存のB/K/O/Q列の規則を維持します。空欄を0に変換しません。数値セルの数式は評価結果がContractに適合すれば保持します。日付セルの数式は不可です。日付に時刻が含まれる既存値は保持し、重複はシートtimezoneで同じ暦日かを判定します。
+
+事前検査はA:Sの使用行について、native date、日付重複、対象数値の型・範囲・整数条件、最大心拍が平均心拍以上であることを確認します。問題があれば変更前に停止します。日付重複・使用行の日付必須・心拍間の大小関係は事前／事後検査であり、今回のセル入力規則が常時保証するものではありません。列ごとの更新権限や全19列のContract完全実装を意味しません。
+
+基盤Contract完了が前提です。専用Property `AI_KARTE_TP_VALIDATION_VERSION=0.3.3-date-numeric-1` を保存し、既存のschema／Contract版は変更しません。途中失敗時には規則の一部が適用済みの場合があるため、問題を確認して再実行します。グリッドを拡張した場合も再適用が必要です。API書き込みに対する完全な保護として入力規則だけには依存しません。
+
+Gateway固有の距離・時間・平均心拍の上限は既存処理で維持し、今回のシート規則へは持ち込みません。LLM_BRIEFへのInstructions組み込みは未実装です。
+
+ローカル検証: `node tests/training_plan_validation_v033_test.js`。Apps Scriptのモックであり、実シートのL列カスタム数式評価と無効値拒否は別途検証します。

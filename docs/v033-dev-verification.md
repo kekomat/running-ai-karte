@@ -23,3 +23,17 @@
 - Contract文書・migrationV033.gs・専用テスト・本記録は未コミット。
 - 専用モックテスト14件を再実行し成功。
 - acceptanceTests.gsのGit除外を確認。配信先設定のIDは前回と同じ。
+
+## Training_Plan Validation 第2段階
+
+日付・数値7列の移行処理とpreviewを新設。ローカル専用テスト27件成功。既存の移行基盤テスト14件も維持。全production GASの結合構文チェックも成功。Devへの配信前に既存ソースを取得しようとしたが、claspの認証がinvalid_grant / invalid_raptで失効しており、配信・実機検証は未実施。再認証後にリモートとの比較、通常push、previewTrainingPlanValidationV033、applyTrainingPlanValidationV033の順で再開する。
+
+Drive Connectorの読み取りではDevシート名とTraining_PlanのA:Sヘッダ、先頭7データ行の既存B/K/O/Q入力規則を確認。Event_Calendar A2:A3のyyyy/MM/dd・DATE_IS_VALID・strict=trueも確認した。Training_Plan全行の事前検査は未実施。
+
+## 2026-10-25 開発ブランチ保存前の確認
+
+- 2026-09-23の「未コミット」は当時の状態。Contract文書・移行基盤・専用テストは、その後のコミット `b4551e4` に保存済み。
+- 今回の保存対象は、Training_Plan Validation本体・専用テストと、Contract文書・本検証記録の4ファイル。
+- 保存前に移行基盤テスト14件、Training_Plan Validationテスト27件を再実行し、合計41件成功。production GAS 11ファイルの結合構文チェックも成功。
+- 上記はローカルのモックテスト・構文確認。Training_Plan Validation第2段階のDev配信・実機検証は未実施であり、正式リリース可能との判定ではない。
+- GitHubの開発ブランチへの保存とGASへの配信は別操作。今回はmainへの統合、Release・タグ作成、GASへの配信は行わない。
